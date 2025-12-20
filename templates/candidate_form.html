@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{% if candidate %}Edit Candidate{% else %}New Candidate{% endif %}</h2>
+</div>
+
+<form id="candidateForm" class="card">
+    <div class="form-group">
+        <label for="id">ID</label>
+        <input type="text" id="id" name="id" value="{{ candidate.id if candidate else '' }}" placeholder="auto-generated if empty">
+        <small>Leave empty to auto-generate</small>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="first_name">First Name *</label>
+            <input type="text" id="first_name" name="first_name" value="{{ candidate.first_name if candidate else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="last_name">Last Name *</label>
+            <input type="text" id="last_name" name="last_name" value="{{ candidate.last_name if candidate else '' }}" required>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="specialism">Specialism *</label>
+        <input type="text" id="specialism" name="specialism" value="{{ candidate.specialism if candidate else '' }}" required placeholder="e.g., Global Macro">
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="beta_mu">Beta Mu (μ) *</label>
+            <input type="number" id="beta_mu" name="beta_mu" step="0.01" value="{{ candidate.beta_mu if candidate else '0.0' }}" required>
+            <small>Mean beta value</small>
+        </div>
+
+        <div class="form-group">
+            <label for="beta_sigma">Beta Sigma (σ) *</label>
+            <input type="number" id="beta_sigma" name="beta_sigma" step="0.01" value="{{ candidate.beta_sigma if candidate else '0.1' }}" required>
+            <small>Beta standard deviation</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="vol_range">Volatility Range *</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <input type="number" id="vol_min" name="vol_min" step="0.001" value="{{ candidate.vol_range[0] if candidate and candidate.vol_range else '0.01' }}" required placeholder="Min">
+            <input type="number" id="vol_max" name="vol_max" step="0.001" value="{{ candidate.vol_range[1] if candidate and candidate.vol_range else '0.02' }}" required placeholder="Max">
+        </div>
+        <small>Min and max volatility values</small>
+    </div>
+
+    <div class="form-group">
+        <label for="bio">Bio *</label>
+        <textarea id="bio" name="bio" required placeholder="Humorous candidate bio">{{ candidate.bio if candidate else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="active">Active</label>
+        <input type="checkbox" id="active" name="active" {% if not candidate or candidate.active %}checked{% endif %}>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">{% if candidate %}Update{% else %}Create{% endif %} Candidate</button>
+        <a href="{{ url_for('list_candidates') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+document.getElementById('candidateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        id: document.getElementById('id').value || undefined,
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        specialism: document.getElementById('specialism').value,
+        beta_mu: parseFloat(document.getElementById('beta_mu').value),
+        beta_sigma: parseFloat(document.getElementById('beta_sigma').value),
+        vol_range: [
+            parseFloat(document.getElementById('vol_min').value),
+            parseFloat(document.getElementById('vol_max').value)
+        ],
+        bio: document.getElementById('bio').value,
+        active: document.getElementById('active').checked
+    };
+
+    try {
+        {% if candidate %}
+        const url = '{{ url_for("edit_candidate", candidate_id=candidate.id) }}';
+        {% else %}
+        const url = '{{ url_for("new_candidate") }}';
+        {% endif %}
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            window.location.href = '{{ url_for("list_candidates") }}';
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

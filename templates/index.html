@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Admin Dashboard</h2>
+</div>
+
+<p style="color: #888; margin-bottom: 2rem;">Manage game content and recruitment candidates.</p>
+
+<div class="grid">
+    <div class="card">
+        <h3>Messages</h3>
+        <p>Manage game messages (newswire, emails, ledger entries)</p>
+        <a href="{{ url_for('list_messages') }}" class="btn btn-primary">Manage Messages</a>
+    </div>
+    
+    <div class="card">
+        <h3>Candidates</h3>
+        <p>Manage recruitment candidates with specialisms and bios</p>
+        <a href="{{ url_for('list_candidates') }}" class="btn btn-primary">Manage Candidates</a>
+    </div>
+    
+    <div class="card">
+        <h3>Games In Progress</h3>
+        <p>View active games currently being played</p>
+        <a href="{{ url_for('list_games_in_progress') }}" class="btn btn-primary">View Active Games</a>
+    </div>
+    
+    <div class="card">
+        <h3>Historical Games</h3>
+        <p>View completed and archived games</p>
+        <a href="{{ url_for('list_historical_games') }}" class="btn btn-primary">View History</a>
+    </div>
+</div>
+
+<div style="margin-top: 3rem; padding: 1.5rem; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">
+    <h3 style="color: #d4af37; margin-bottom: 1rem;">API Configuration</h3>
+    <p style="color: #888; font-size: 0.875rem;">
+        API Base: <code>{{ API_BASE }}</code><br>
+        Admin Token: <code>{{ '***' + ADMIN_TOKEN[-4:] if ADMIN_TOKEN else 'Not set' }}</code>
+    </p>
+</div>
+{% endblock %}
+

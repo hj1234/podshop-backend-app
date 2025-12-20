@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Games In Progress</h2>
+</div>
+
+{% if games %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fund Name</th>
+            <th>Time Started</th>
+            <th>Geolocation</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in games %}
+        <tr>
+            <td><code>{{ game.id }}</code></td>
+            <td><strong>{{ game.fund_name }}</strong></td>
+            <td>{{ game.time_started }}</td>
+            <td><code>{{ game.geolocation or 'N/A' }}</code></td>
+            <td>{{ game.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: #888; text-align: center; padding: 3rem;">No games in progress.</p>
+{% endif %}
+{% endblock %}
+

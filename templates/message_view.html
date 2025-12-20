@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Message Details</h2>
+    <div>
+        <a href="{{ url_for('edit_message', message_id=message.id) }}" class="btn btn-primary">Edit</a>
+        <a href="{{ url_for('list_messages') }}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>Basic Information</h3>
+    <p><strong>ID:</strong> <code>{{ message.id }}</code></p>
+    <p><strong>Channel:</strong> {{ message.channel }}</p>
+    <p><strong>Creation Trigger:</strong> {{ message.creation_trigger }}</p>
+    <p><strong>Active:</strong> {{ 'Yes' if message.active else 'No' }}</p>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>Creation Trigger Config</h3>
+    <div class="json-view">{{ message.creation_trigger_config | tojson(indent=2) }}</div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>Features</h3>
+    <div class="json-view">{{ message.features | tojson(indent=2) }}</div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3>Impact</h3>
+    <div class="json-view">{{ message.impact | tojson(indent=2) }}</div>
+</div>
+
+<div class="card">
+    <h3>Content</h3>
+    <div class="json-view">{{ message.content | tojson(indent=2) }}</div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Recruitment Candidates</h2>
+    <a href="{{ url_for('new_candidate') }}" class="btn btn-primary">+ New Candidate</a>
+</div>
+
+{% if candidates %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Specialism</th>
+            <th>Beta (μ, σ)</th>
+            <th>Vol Range</th>
+            <th>Bio</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for candidate in candidates %}
+        <tr>
+            <td><strong>{{ candidate.first_name }} {{ candidate.last_name }}</strong></td>
+            <td>{{ candidate.specialism }}</td>
+            <td><code>{{ candidate.beta_mu }}, {{ candidate.beta_sigma }}</code></td>
+            <td><code>{{ candidate.vol_range[0] }}-{{ candidate.vol_range[1] }}</code></td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ candidate.bio }}">{{ candidate.bio }}</td>
+            <td>{{ '✓' if candidate.active else '✗' }}</td>
+            <td>
+                <a href="{{ url_for('edit_candidate', candidate_id=candidate.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                <form method="POST" action="{{ url_for('delete_candidate', candidate_id=candidate.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this candidate?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: #888; text-align: center; padding: 3rem;">No candidates found.</p>
+{% endif %}
+{% endblock %}
+

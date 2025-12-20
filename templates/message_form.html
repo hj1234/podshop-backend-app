@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{% if message %}Edit Message{% else %}New Message{% endif %}</h2>
+</div>
+
+<form id="messageForm" class="card">
+    <div class="form-group">
+        <label for="id">ID</label>
+        <input type="text" id="id" name="id" value="{{ message.id if message else '' }}" placeholder="auto-generated if empty">
+        <small>Leave empty to auto-generate</small>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="channel">Channel *</label>
+            <select id="channel" name="channel" required>
+                <option value="newswire" {% if message and message.channel == 'newswire' %}selected{% endif %}>Newswire</option>
+                <option value="email" {% if message and message.channel == 'email' %}selected{% endif %}>Email</option>
+                <option value="ledger" {% if message and message.channel == 'ledger' %}selected{% endif %}>Ledger</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="creation_trigger">Creation Trigger *</label>
+            <select id="creation_trigger" name="creation_trigger" required>
+                <option value="random" {% if message and message.creation_trigger == 'random' %}selected{% endif %}>Random</option>
+                <option value="game_event" {% if message and message.creation_trigger == 'game_event' %}selected{% endif %}>Game Event</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="active">Active</label>
+        <input type="checkbox" id="active" name="active" {% if not message or message.active %}checked{% endif %}>
+    </div>
+
+    <div id="triggerConfig" class="form-group">
+        <label>Creation Trigger Config</label>
+        <textarea id="creation_trigger_config" name="creation_trigger_config" placeholder='{"probability": 0.03} or {"event_type": "leverage_threshold", "conditions": {...}}'>{{ message.creation_trigger_config | tojson(indent=2) if message else '{}' }}</textarea>
+        <small>JSON format</small>
+    </div>
+
+    <div class="form-group">
+        <label>Features</label>
+        <textarea id="features" name="features" placeholder='{"read_only": true, "requires_response": false}'>{{ message.features | tojson(indent=2) if message else '{"read_only": true, "requires_response": false}' }}</textarea>
+        <small>JSON format</small>
+    </div>
+
+    <div class="form-group">
+        <label>Impact</label>
+        <textarea id="impact" name="impact" placeholder='{"type": "none"} or {"type": "simulation", "simulation": {...}}'>{{ message.impact | tojson(indent=2) if message else '{"type": "none"}' }}</textarea>
+        <small>JSON format</small>
+    </div>
+
+    <div class="form-group">
+        <label>Content</label>
+        <textarea id="content" name="content" placeholder='{"sender": "...", "subject": "...", "body": "...", "type": "..."}'>{{ message.content | tojson(indent=2) if message else '{}' }}</textarea>
+        <small>JSON format - structure depends on channel</small>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">{% if message %}Update{% else %}Create{% endif %} Message</button>
+        <a href="{{ url_for('list_messages') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+document.getElementById('messageForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        id: document.getElementById('id').value || undefined,
+        channel: document.getElementById('channel').value,
+        creation_trigger: document.getElementById('creation_trigger').value,
+        active: document.getElementById('active').checked,
+        creation_trigger_config: JSON.parse(document.getElementById('creation_trigger_config').value || '{}'),
+        features: JSON.parse(document.getElementById('features').value || '{}'),
+        impact: JSON.parse(document.getElementById('impact').value || '{}'),
+        content: JSON.parse(document.getElementById('content').value || '{}')
+    };
+
+    try {
+        {% if message %}
+        const url = '{{ url_for("edit_message", message_id=message.id) }}';
+        {% else %}
+        const url = '{{ url_for("new_message") }}';
+        {% endif %}
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            window.location.href = '{{ url_for("list_messages") }}';
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Historical Games</h2>
+</div>
+
+{% if games %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fund Name</th>
+            <th>Time Started</th>
+            <th>Time Ended</th>
+            <th>Time Played</th>
+            <th>Completed</th>
+            <th>Total PnL</th>
+            <th>Geolocation</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in games %}
+        <tr>
+            <td><code>{{ game.id }}</code></td>
+            <td><strong>{{ game.fund_name }}</strong></td>
+            <td>{{ game.time_started }}</td>
+            <td>{{ game.time_ended or 'N/A' }}</td>
+            <td>{{ game.time_played or '—' }}</td>
+            <td>
+                {% if game.completed %}
+                    <span style="color: #4caf50;">✓</span>
+                {% else %}
+                    <span style="color: #f44336;">✗</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if game.total_pnl is not none %}
+                    {% if game.total_pnl >= 0 %}
+                        <span style="color: #4caf50;">${{ "{:,.0f}".format(game.total_pnl) }}</span>
+                    {% else %}
+                        <span style="color: #f44336;">${{ "{:,.0f}".format(game.total_pnl) }}</span>
+                    {% endif %}
+                {% else %}
+                    <span style="color: #888;">—</span>
+                {% endif %}
+            </td>
+            <td><code>{{ game.geolocation or 'N/A' }}</code></td>
+            <td>{{ game.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: #888; text-align: center; padding: 3rem;">No historical games.</p>
+{% endif %}
+{% endblock %}
+

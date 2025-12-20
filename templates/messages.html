@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Messages</h2>
+    <a href="{{ url_for('new_message') }}" class="btn btn-primary">+ New Message</a>
+</div>
+
+{% if messages %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Channel</th>
+            <th>Type</th>
+            <th>Trigger</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for msg in messages %}
+        <tr>
+            <td><code>{{ msg.id }}</code></td>
+            <td><strong>{{ msg.channel }}</strong></td>
+            <td>{{ msg.content.type if msg.content else 'N/A' }}</td>
+            <td>{{ msg.creation_trigger }}</td>
+            <td>{{ '✓' if msg.active else '✗' }}</td>
+            <td>
+                <a href="{{ url_for('view_message', message_id=msg.id) }}" class="btn btn-secondary btn-sm">View</a>
+                <a href="{{ url_for('edit_message', message_id=msg.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+                <form method="POST" action="{{ url_for('delete_message', message_id=msg.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this message?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: #888; text-align: center; padding: 3rem;">No messages found.</p>
+{% endif %}
+{% endblock %}
+
