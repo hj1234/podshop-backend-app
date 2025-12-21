@@ -23,18 +23,18 @@ def get_headers():
         'Content-Type': 'application/json'
     }
 
-def api_request(method, endpoint, data=None):
+def api_request(method, endpoint, data=None, params=None):
     """Make API request with error handling"""
     try:
         url = f'{API_BASE}{endpoint}'
         if method == 'GET':
-            response = requests.get(url, headers=get_headers())
+            response = requests.get(url, headers=get_headers(), params=params)
         elif method == 'POST':
-            response = requests.post(url, json=data, headers=get_headers())
+            response = requests.post(url, json=data, headers=get_headers(), params=params)
         elif method == 'PUT':
-            response = requests.put(url, json=data, headers=get_headers())
+            response = requests.put(url, json=data, headers=get_headers(), params=params)
         elif method == 'DELETE':
-            response = requests.delete(url, headers=get_headers())
+            response = requests.delete(url, headers=get_headers(), params=params)
         else:
             raise ValueError(f'Unsupported method: {method}')
         
@@ -211,20 +211,128 @@ def delete_candidate(candidate_id):
 @app.route('/games/in-progress')
 @login_required
 def list_games_in_progress():
-    """List all games in progress"""
-    games = api_request('GET', '/api/games/in-progress')
-    if games is None:
+    """List all games in progress with pagination"""
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 50, type=int)
+    offset = (page - 1) * limit
+    
+    params = {'limit': limit, 'offset': offset}
+    result = api_request('GET', '/api/games/in-progress', params=params)
+    
+    if result is None:
         games = []
-    return render_template('games_in_progress.html', games=games)
+        total = 0
+        has_more = False
+    else:
+        games = result.get('games', [])
+        total = result.get('total', 0)
+        has_more = result.get('has_more', False)
+    
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+    
+    return render_template('games_in_progress.html', 
+                         games=games, 
+                         page=page, 
+                         total_pages=total_pages,
+                         total=total,
+                         has_more=has_more,
+                         limit=limit)
 
 @app.route('/games/historical')
 @login_required
 def list_historical_games():
-    """List all historical games"""
-    games = api_request('GET', '/api/games/historical')
-    if games is None:
+    """List all historical games with pagination"""
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 50, type=int)
+    offset = (page - 1) * limit
+    
+    params = {'limit': limit, 'offset': offset}
+    result = api_request('GET', '/api/games/historical', params=params)
+    
+    if result is None:
         games = []
-    return render_template('games_historical.html', games=games)
+        total = 0
+        has_more = False
+    else:
+        games = result.get('games', [])
+        total = result.get('total', 0)
+        has_more = result.get('has_more', False)
+    
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+    
+    return render_template('games_historical.html', 
+                         games=games, 
+                         page=page, 
+                         total_pages=total_pages,
+                         total=total,
+                         has_more=has_more,
+                         limit=limit)
+
+@app.route('/games/map')
+@login_required
+def games_map():
+    """Map view of all games (current and historical)"""
+    # Get all games without pagination for map
+    # We'll fetch a large number to get all games
+    params_in_progress = {'limit': 10000, 'offset': 0}
+    params_historical = {'limit': 10000, 'offset': 0}
+    
+    result_in_progress = api_request('GET', '/api/games/in-progress', params=params_in_progress)
+    result_historical = api_request('GET', '/api/games/historical', params=params_historical)
+    
+    games_in_progress = result_in_progress.get('games', []) if result_in_progress else []
+    games_historical = result_historical.get('games', []) if result_historical else []
+    
+    # Parse geolocation and prepare markers
+    markers = []
+    
+    # Process in-progress games
+    for game in games_in_progress:
+        geo = game.get('geolocation')
+        if geo:
+            try:
+                # Parse "lat,lng" format
+                parts = geo.split(',')
+                if len(parts) == 2:
+                    lat = float(parts[0].strip())
+                    lng = float(parts[1].strip())
+                    markers.append({
+                        'lat': lat,
+                        'lng': lng,
+                        'type': 'in_progress',
+                        'fund_name': game.get('fund_name', 'Unknown'),
+                        'time_started': game.get('time_started', ''),
+                        'id': game.get('id', '')
+                    })
+            except (ValueError, AttributeError):
+                # Skip invalid geolocation
+                continue
+    
+    # Process historical games
+    for game in games_historical:
+        geo = game.get('geolocation')
+        if geo:
+            try:
+                # Parse "lat,lng" format
+                parts = geo.split(',')
+                if len(parts) == 2:
+                    lat = float(parts[0].strip())
+                    lng = float(parts[1].strip())
+                    markers.append({
+                        'lat': lat,
+                        'lng': lng,
+                        'type': 'historical',
+                        'fund_name': game.get('fund_name', 'Unknown'),
+                        'time_started': game.get('time_started', ''),
+                        'time_ended': game.get('time_ended', ''),
+                        'total_pnl': game.get('total_pnl'),
+                        'id': game.get('id', '')
+                    })
+            except (ValueError, AttributeError):
+                # Skip invalid geolocation
+                continue
+    
+    return render_template('games_map.html', markers=markers)
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

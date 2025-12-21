@@ -217,6 +217,7 @@
         <a href="{{ url_for('list_candidates') }}" {% if 'candidate' in request.endpoint %}class="active"{% endif %}>Candidates</a>
         <a href="{{ url_for('list_games_in_progress') }}" {% if 'games_in_progress' in request.endpoint %}class="active"{% endif %}>Games (Active)</a>
         <a href="{{ url_for('list_historical_games') }}" {% if 'historical_games' in request.endpoint %}class="active"{% endif %}>Games (History)</a>
+        <a href="{{ url_for('games_map') }}" {% if 'games_map' in request.endpoint %}class="active"{% endif %}>Map View</a>
         <div style="margin-left: auto;">
             <a href="{{ url_for('logout') }}" style="color: #888;">Logout</a>
         </div>

@@ -3,6 +3,9 @@
 {% block content %}
 <div class="page-header">
     <h2>Historical Games</h2>
+    {% if total is defined %}
+    <span style="color: #888; font-size: 0.875rem;">Total: {{ total }}</span>
+    {% endif %}
 </div>
 
 {% if games %}
@@ -52,6 +55,32 @@
         {% endfor %}
     </tbody>
 </table>
+
+{% if total_pages > 1 %}
+<div class="pagination" style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #888; font-size: 0.875rem;">
+        Showing {{ ((page - 1) * limit) + 1 }} to {{ [page * limit, total]|min }} of {{ total }} games
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}&limit={{ limit }}" class="btn btn-secondary btn-sm">Previous</a>
+        {% else %}
+        <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Previous</span>
+        {% endif %}
+        
+        <span style="color: #888; padding: 0 1rem;">
+            Page {{ page }} of {{ total_pages }}
+        </span>
+        
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}&limit={{ limit }}" class="btn btn-secondary btn-sm">Next</a>
+        {% else %}
+        <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Next</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 {% else %}
 <p style="color: #888; text-align: center; padding: 3rem;">No historical games.</p>
 {% endif %}
