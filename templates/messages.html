@@ -7,6 +7,7 @@
 </div>
 
 {% if messages %}
+<div class="table-wrapper">
 <table>
     <thead>
         <tr>
@@ -37,6 +38,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p style="color: #888; text-align: center; padding: 3rem;">No messages found.</p>
 {% endif %}

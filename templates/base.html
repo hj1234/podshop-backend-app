@@ -16,22 +16,38 @@
         .header {
             background: #1a1a1a;
             border-bottom: 1px solid #333;
-            padding: 1rem 2rem;
+            padding: 1rem 1rem;
         }
         .header h1 { color: #d4af37; font-size: 1.5rem; }
         .nav {
             background: #151515;
-            padding: 0.5rem 2rem;
+            padding: 0.5rem 1rem;
             border-bottom: 1px solid #333;
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .nav::-webkit-scrollbar {
+            height: 4px;
+        }
+        .nav::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        .nav::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 2px;
         }
         .nav a {
             color: #888;
             text-decoration: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.75rem;
             border-radius: 4px;
             transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 0.875rem;
         }
         .nav a:hover, .nav a.active { 
             color: #d4af37; 
@@ -39,8 +55,30 @@
         }
         .container {
             max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            margin: 1rem auto;
+            padding: 0 1rem;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        @media (min-width: 768px) {
+            .header {
+                padding: 1rem 2rem;
+            }
+            .nav {
+                padding: 0.5rem 2rem;
+                gap: 1rem;
+            }
+            .nav a {
+                padding: 0.5rem 1rem;
+            }
+            .container {
+                margin: 2rem auto;
+                padding: 0 2rem;
+            }
+            .pagination {
+                flex-direction: row !important;
+                justify-content: space-between !important;
+            }
         }
         .flash {
             padding: 1rem;
@@ -57,8 +95,15 @@
             border-left: 4px solid #f44336; 
             color: #ef9a9a;
         }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+        }
         table {
             width: 100%;
+            min-width: 600px;
             border-collapse: collapse;
             background: #1a1a1a;
             border: 1px solid #333;
@@ -182,6 +227,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         .page-header h2 {
             color: #d4af37;
@@ -218,7 +265,7 @@
         <a href="{{ url_for('list_games_in_progress') }}" {% if 'games_in_progress' in request.endpoint %}class="active"{% endif %}>Games (Active)</a>
         <a href="{{ url_for('list_historical_games') }}" {% if 'historical_games' in request.endpoint %}class="active"{% endif %}>Games (History)</a>
         <a href="{{ url_for('games_map') }}" {% if 'games_map' in request.endpoint %}class="active"{% endif %}>Map View</a>
-        <div style="margin-left: auto;">
+        <div style="margin-left: auto; flex-shrink: 0;">
             <a href="{{ url_for('logout') }}" style="color: #888;">Logout</a>
         </div>
     </div>

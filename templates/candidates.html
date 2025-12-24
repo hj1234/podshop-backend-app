@@ -7,6 +7,7 @@
 </div>
 
 {% if candidates %}
+<div class="table-wrapper">
 <table>
     <thead>
         <tr>
@@ -38,6 +39,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <p style="color: #888; text-align: center; padding: 3rem;">No candidates found.</p>
 {% endif %}
