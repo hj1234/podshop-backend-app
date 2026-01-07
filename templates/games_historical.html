@@ -91,7 +91,11 @@
 </div>
 
 <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search by fund name..." autocomplete="off">
+    <form method="GET" action="{{ url_for('list_historical_games') }}" id="searchForm">
+        <input type="text" id="searchInput" name="search" placeholder="Search by fund name..." autocomplete="off" value="{{ search or '' }}">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="limit" value="{{ limit }}">
+    </form>
 </div>
 
 {% if games %}
@@ -155,7 +159,7 @@
     </div>
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center;">
         {% if page > 1 %}
-        <a href="?page={{ page - 1 }}&limit={{ limit }}" class="btn btn-secondary btn-sm">Previous</a>
+        <a href="?page={{ page - 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
         {% else %}
         <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Previous</span>
         {% endif %}
@@ -165,7 +169,7 @@
         </span>
         
         {% if page < total_pages %}
-        <a href="?page={{ page + 1 }}&limit={{ limit }}" class="btn btn-secondary btn-sm">Next</a>
+        <a href="?page={{ page + 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
         {% else %}
         <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Next</span>
         {% endif %}
@@ -196,24 +200,44 @@
 {% block extra_js %}
 <script>
     let currentDeleteGameId = null;
+    let searchTimeout = null;
     
-    // Search functionality
+    // Search functionality - server-side search with debounce
     const searchInput = document.getElementById('searchInput');
-    const gamesTable = document.getElementById('gamesTable');
+    const searchForm = document.getElementById('searchForm');
     
-    if (searchInput && gamesTable) {
+    if (searchInput && searchForm) {
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            const rows = gamesTable.querySelectorAll('tbody tr');
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
             
-            rows.forEach(row => {
-                const fundName = row.getAttribute('data-fund-name') || '';
-                if (fundName.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+            // Debounce search - wait 500ms after user stops typing
+            searchTimeout = setTimeout(function() {
+                // Reset to page 1 when searching
+                const pageInput = searchForm.querySelector('input[name="page"]');
+                if (pageInput) {
+                    pageInput.value = '1';
                 }
-            });
+                // Submit the form to trigger server-side search
+                searchForm.submit();
+            }, 500);
+        });
+        
+        // Allow Enter key to submit immediately
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                const pageInput = searchForm.querySelector('input[name="page"]');
+                if (pageInput) {
+                    pageInput.value = '1';
+                }
+                searchForm.submit();
+            }
         });
     }
     
