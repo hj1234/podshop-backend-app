@@ -1,5 +1,87 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    .search-bar {
+        margin-bottom: 1.5rem;
+    }
+    .search-bar input {
+        width: 100%;
+        max-width: 400px;
+        padding: 0.75rem;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        color: #e0e0e0;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.875rem;
+    }
+    .search-bar input:focus {
+        outline: none;
+        border-color: #d4af37;
+    }
+    .search-bar input::placeholder {
+        color: #666;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        align-items: center;
+        justify-content: center;
+    }
+    .modal.active {
+        display: flex;
+    }
+    .modal-content {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .modal-content h3 {
+        color: #d4af37;
+        margin-bottom: 1rem;
+    }
+    .modal-content p {
+        color: #e0e0e0;
+        margin-bottom: 1.5rem;
+    }
+    .modal-content input {
+        width: 100%;
+        padding: 0.75rem;
+        background: #0a0a0a;
+        border: 1px solid #333;
+        color: #e0e0e0;
+        border-radius: 4px;
+        font-family: inherit;
+        margin-bottom: 1.5rem;
+    }
+    .modal-content input:focus {
+        outline: none;
+        border-color: #d4af37;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+    .delete-confirm-text {
+        color: #f44336;
+        font-weight: 600;
+        font-family: 'Monaco', 'Courier New', monospace;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h2>Historical Games</h2>
@@ -8,9 +90,13 @@
     {% endif %}
 </div>
 
+<div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search by fund name..." autocomplete="off">
+</div>
+
 {% if games %}
 <div class="table-wrapper">
-<table>
+<table id="gamesTable">
     <thead>
         <tr>
             <th>ID</th>
@@ -22,11 +108,12 @@
             <th>Total PnL</th>
             <th>Geolocation</th>
             <th>Created At</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for game in games %}
-        <tr>
+        <tr data-fund-name="{{ game.fund_name|lower }}">
             <td><code>{{ game.id }}</code></td>
             <td><strong>{{ game.fund_name }}</strong></td>
             <td>{{ game.time_started }}</td>
@@ -52,6 +139,9 @@
             </td>
             <td><code>{{ game.geolocation or 'N/A' }}</code></td>
             <td>{{ game.created_at }}</td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ game.id }}', '{{ game.fund_name|replace("'", "\\'") }}')">Delete</button>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
@@ -86,5 +176,121 @@
 {% else %}
 <p style="color: #888; text-align: center; padding: 3rem;">No historical games.</p>
 {% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Deletion</h3>
+        <p>Are you sure you want to delete the game <strong id="deleteGameName"></strong>?</p>
+        <p style="color: #888; font-size: 0.875rem; margin-bottom: 0.5rem;">This action cannot be undone.</p>
+        <p style="margin-bottom: 1rem;">Type <span class="delete-confirm-text">delete-game</span> to confirm:</p>
+        <input type="text" id="deleteConfirmInput" placeholder="Type 'delete-game' to confirm" autocomplete="off">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" id="deleteConfirmButton" onclick="deleteGame()" disabled>Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentDeleteGameId = null;
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const gamesTable = document.getElementById('gamesTable');
+    
+    if (searchInput && gamesTable) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = gamesTable.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const fundName = row.getAttribute('data-fund-name') || '';
+                if (fundName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Delete confirmation modal
+    function confirmDelete(gameId, fundName) {
+        currentDeleteGameId = gameId;
+        document.getElementById('deleteGameName').textContent = fundName;
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('deleteConfirmButton').disabled = true;
+        document.getElementById('deleteModal').classList.add('active');
+        document.getElementById('deleteConfirmInput').focus();
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+        currentDeleteGameId = null;
+        document.getElementById('deleteConfirmInput').value = '';
+    }
+    
+    // Enable/disable delete button based on confirmation text
+    const deleteConfirmInput = document.getElementById('deleteConfirmInput');
+    const deleteConfirmButton = document.getElementById('deleteConfirmButton');
+    
+    if (deleteConfirmInput && deleteConfirmButton) {
+        deleteConfirmInput.addEventListener('input', function() {
+            if (this.value.trim() === 'delete-game') {
+                deleteConfirmButton.disabled = false;
+            } else {
+                deleteConfirmButton.disabled = true;
+            }
+        });
+        
+        // Allow Enter key to submit if confirmation text is correct
+        deleteConfirmInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim() === 'delete-game' && !deleteConfirmButton.disabled) {
+                deleteGame();
+            }
+        });
+    }
+    
+    // Delete game function
+    function deleteGame() {
+        if (!currentDeleteGameId) return;
+        
+        const gameId = currentDeleteGameId;
+        const button = document.getElementById('deleteConfirmButton');
+        button.disabled = true;
+        button.textContent = 'Deleting...';
+        
+        fetch(`/games/historical/${gameId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to delete game');
+                });
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+            button.disabled = false;
+            button.textContent = 'Delete';
+        });
+    }
+    
+    // Close modal on outside click
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+</script>
 {% endblock %}
 

@@ -268,6 +268,18 @@ def list_historical_games():
                          has_more=has_more,
                          limit=limit)
 
+@app.route('/games/historical/<game_id>/delete', methods=['POST'])
+@login_required
+def delete_historical_game(game_id):
+    """Delete a historical game"""
+    result = api_request('DELETE', f'/api/admin/games/historical/{game_id}')
+    if result:
+        flash('Game deleted successfully', 'success')
+        return jsonify({'success': True})
+    else:
+        flash('Failed to delete game', 'error')
+        return jsonify({'error': 'Failed to delete game'}), 400
+
 @app.route('/games/map')
 @login_required
 def games_map():
