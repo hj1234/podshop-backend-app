@@ -79,6 +79,30 @@
         font-weight: 600;
         font-family: 'Monaco', 'Courier New', monospace;
     }
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 1.5rem !important;
+    }
+    .sortable:hover {
+        background: #2a2a2a;
+    }
+    .sortable::after {
+        content: '↕';
+        position: absolute;
+        right: 0.5rem;
+        color: #666;
+        font-size: 0.75rem;
+    }
+    .sortable.asc::after {
+        content: '↑';
+        color: #d4af37;
+    }
+    .sortable.desc::after {
+        content: '↓';
+        color: #d4af37;
+    }
 </style>
 {% endblock %}
 
@@ -95,6 +119,10 @@
         <input type="text" id="searchInput" name="search" placeholder="Search by fund name..." autocomplete="off" value="{{ search or '' }}">
         <input type="hidden" name="page" value="1">
         <input type="hidden" name="limit" value="{{ limit }}">
+        {% if sort_by %}
+        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+        <input type="hidden" name="sort_order" value="{{ sort_order }}">
+        {% endif %}
     </form>
 </div>
 
@@ -103,15 +131,15 @@
 <table id="gamesTable">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Fund Name</th>
-            <th>Time Started</th>
-            <th>Time Ended</th>
-            <th>Time Played</th>
-            <th>Completed</th>
-            <th>Total PnL</th>
-            <th>Geolocation</th>
-            <th>Created At</th>
+            <th class="sortable {% if sort_by == 'id' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('id')">ID</th>
+            <th class="sortable {% if sort_by == 'fund_name' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('fund_name')">Fund Name</th>
+            <th class="sortable {% if sort_by == 'time_started' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('time_started')">Time Started</th>
+            <th class="sortable {% if sort_by == 'time_ended' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('time_ended')">Time Ended</th>
+            <th class="sortable {% if sort_by == 'time_played' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('time_played')">Time Played</th>
+            <th class="sortable {% if sort_by == 'completed' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('completed')">Completed</th>
+            <th class="sortable {% if sort_by == 'total_pnl' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('total_pnl')">Total PnL</th>
+            <th class="sortable {% if sort_by == 'geolocation' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('geolocation')">Geolocation</th>
+            <th class="sortable {% if sort_by == 'created_at' %}{{ sort_order|lower }}{% endif %}" onclick="sortTable('created_at')">Created At</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -159,7 +187,7 @@
     </div>
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center;">
         {% if page > 1 %}
-        <a href="?page={{ page - 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
+        <a href="?page={{ page - 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}&sort_order={{ sort_order }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
         {% else %}
         <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Previous</span>
         {% endif %}
@@ -169,7 +197,7 @@
         </span>
         
         {% if page < total_pages %}
-        <a href="?page={{ page + 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
+        <a href="?page={{ page + 1 }}&limit={{ limit }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}&sort_order={{ sort_order }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
         {% else %}
         <span class="btn btn-secondary btn-sm" style="opacity: 0.5; cursor: not-allowed;">Next</span>
         {% endif %}
@@ -201,6 +229,31 @@
 <script>
     let currentDeleteGameId = null;
     let searchTimeout = null;
+    
+    // Sort table function
+    function sortTable(column) {
+        const currentSortBy = '{{ sort_by }}';
+        const currentSortOrder = '{{ sort_order }}';
+        
+        // Determine new sort order
+        let newSortOrder = 'ASC';
+        if (currentSortBy === column && currentSortOrder === 'ASC') {
+            newSortOrder = 'DESC';
+        }
+        
+        // Build URL with all current parameters
+        const params = new URLSearchParams();
+        params.set('sort_by', column);
+        params.set('sort_order', newSortOrder);
+        params.set('page', '1'); // Reset to first page when sorting
+        params.set('limit', '{{ limit }}');
+        
+        {% if search %}
+        params.set('search', '{{ search|urlencode }}');
+        {% endif %}
+        
+        window.location.href = '?' + params.toString();
+    }
     
     // Search functionality - server-side search with debounce
     const searchInput = document.getElementById('searchInput');

@@ -241,13 +241,15 @@ def list_games_in_progress():
 @app.route('/games/historical')
 @login_required
 def list_historical_games():
-    """List all historical games with pagination and search"""
+    """List all historical games with pagination, search, and sorting"""
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 50, type=int)
     search = request.args.get('search', '', type=str)
+    sort_by = request.args.get('sort_by', 'time_started', type=str)
+    sort_order = request.args.get('sort_order', 'DESC', type=str)
     offset = (page - 1) * limit
     
-    params = {'limit': limit, 'offset': offset}
+    params = {'limit': limit, 'offset': offset, 'sort_by': sort_by, 'sort_order': sort_order}
     if search:
         params['search'] = search.strip()
     
@@ -271,7 +273,9 @@ def list_historical_games():
                          total=total,
                          has_more=has_more,
                          limit=limit,
-                         search=search)
+                         search=search,
+                         sort_by=sort_by,
+                         sort_order=sort_order)
 
 @app.route('/games/historical/<game_id>/delete', methods=['POST'])
 @login_required
