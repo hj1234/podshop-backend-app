@@ -110,7 +110,12 @@
 <div class="page-header">
     <h2>Historical Games</h2>
     {% if total is defined %}
-    <span style="color: #888; font-size: 0.875rem;">Total: {{ total }}</span>
+    <div style="color: #888; font-size: 0.875rem; margin-top: 0.5rem;">
+        <span>Total Games: {{ total }}</span>
+        {% if total_time_played is defined %}
+        <span style="margin-left: 1rem;">Total Time Played: {{ total_time_played }}</span>
+        {% endif %}
+    </div>
     {% endif %}
 </div>
 

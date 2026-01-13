@@ -258,10 +258,12 @@ def list_historical_games():
     if result is None:
         games = []
         total = 0
+        total_time_played = "0s"
         has_more = False
     else:
         games = result.get('games', [])
         total = result.get('total', 0)
+        total_time_played = result.get('total_time_played', '0s')
         has_more = result.get('has_more', False)
     
     total_pages = (total + limit - 1) // limit if total > 0 else 1
@@ -271,6 +273,7 @@ def list_historical_games():
                          page=page, 
                          total_pages=total_pages,
                          total=total,
+                         total_time_played=total_time_played,
                          has_more=has_more,
                          limit=limit,
                          search=search,
